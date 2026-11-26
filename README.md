@@ -1,6 +1,6 @@
 # LPF Torneo Clausura
 
-Juego de fútbol por turnos hecho en Java con Swing, para la materia Programación II (Tecnicatura Universitaria en Programación, UTN FRRe).
+Juego de fútbol por turnos hecho en Java con Swing, para la materia Programación II.
 
 Elegís uno de ocho equipos del fútbol argentino y tratás de ganar el torneo: cuartos de final, semifinal y final.
 
