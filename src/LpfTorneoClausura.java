@@ -20,6 +20,29 @@ public class LpfTorneoClausura extends JFrame {
     public LpfTorneoClausura() {
         super("LPF Torneo Clausura");
 
+        // Boton "Iniciar juego": va a la pantalla de elegir equipo
+        Runnable accionIniciar = new Runnable() {
+            public void run() {
+                cartas.show(contenedor, "menu");
+            }
+        };
+
+        // Boton "Instrucciones"
+        Runnable accionInstrucciones = new Runnable() {
+            public void run() {
+                mostrarInstrucciones();
+            }
+        };
+
+        // Boton "Salir"
+        Runnable accionSalir = new Runnable() {
+            public void run() {
+                System.exit(0);
+            }
+        };
+
+        PanelInicio inicio = new PanelInicio(accionIniciar, accionInstrucciones, accionSalir);
+
         // Al elegir un equipo se inicia el torneo
         PanelMenu.AlElegirEquipo alElegir = new PanelMenu.AlElegirEquipo() {
             public void elegido(Equipo e) {
@@ -27,6 +50,7 @@ public class LpfTorneoClausura extends JFrame {
             }
         };
 
+        contenedor.add(inicio, "inicio");
         contenedor.add(new PanelMenu(equipos, alElegir), "menu");
         contenedor.add(llaves, "llaves");
 
@@ -36,7 +60,39 @@ public class LpfTorneoClausura extends JFrame {
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
 
-        cartas.show(contenedor, "menu");
+        cartas.show(contenedor, "inicio");
+    }
+
+    private void mostrarInstrucciones() {
+        String texto = "<html><div style='width:400px; font-family:Arial;'>"
+                + "<h2>REGLAS DEL JUEGO</h2>"
+
+                + "<b>1. Elegí tu equipo</b><br>"
+                + "Seleccioná uno de los ocho equipos disponibles.<br><br>"
+
+                + "<b>2. Objetivo</b><br>"
+                + "Ganale a tus rivales para avanzar en el Torneo Clausura. "
+                + "Tenés que superar los cuartos de final, la semifinal y la final.<br><br>"
+
+                + "<b>3. Cómo jugar</b><br>"
+                + "Hacé clic sobre tus compañeros para pasarles la pelota. "
+                + "Las líneas punteadas indican los pases disponibles.<br><br>"
+
+                + "<b>4. Los rivales</b><br>"
+                + "Los jugadores contrarios se mueven e intentan interceptar tus pases. "
+                + "Si te quitan la pelota, podés recibir un gol en contra.<br><br>"
+
+                + "<b>5. Cómo hacer goles</b><br>"
+                + "Avanzá con pases hasta llegar al arco rival. "
+                + "Al seleccionar el arco, tu jugador realizará un remate.<br><br>"
+
+                + "<b>6. Ganar el torneo</b><br>"
+                + "Cada partido se gana llegando a dos goles. "
+                + "Si perdés, quedás eliminado del torneo.<br><br>";
+
+        JOptionPane.showMessageDialog(this, texto,
+                "Instrucciones - LPF Torneo Clausura",
+                JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void iniciar(Equipo elegido) {
