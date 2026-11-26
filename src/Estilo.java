@@ -1,0 +1,3 @@
+enum Estilo {
+    BANDA_DIAGONAL, BANDA_HORIZONTAL, LISO, RAYAS, V
+}
