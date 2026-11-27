@@ -9,11 +9,21 @@ class LogicaPartido {
     static final int ARCO = 11;
     static final int META = 2;
     static final double PROB_GOL_RIVAL_AL_QUITAR = 0.20;
-    static final double PROB_GOL_TIRO = 0.80;
+    // Probabilidad de gol segun que tan bien parado este el arquero rival:
+    // si esta justo en la linea del remate -> MIN, si esta descolocado -> MAX
+    static final double PROB_GOL_MIN = 0.60;
+    static final double PROB_GOL_MAX = 0.95;
 
     static final int TIPO_DEFENSOR = 0;
     static final int TIPO_MEDIO = 1;
     static final int TIPO_DELANTERO = 2;
+    static final int TIPO_ARQUERO = 3;
+
+    // Zona donde se mueve el arquero rival (delante de su arco)
+    static final double ARQUERO_X = 0.895;
+    static final double ARQUERO_MIN_Y = 0.38;
+    static final double ARQUERO_MAX_Y = 0.62;
+    static final double ARQUERO_VEL_MAX = 0.0065;
 
     // Clase interna: rival que se mueve por la cancha
     static class RivalMovil {
@@ -45,6 +55,9 @@ class LogicaPartido {
     Equipo rival;
     Random rnd = new Random();
     List<RivalMovil> rivales = new ArrayList<RivalMovil>();
+
+    // El arquero rival va aparte: no intercepta pases, ataja remates
+    RivalMovil arqueroRival;
 
     int golesMio = 0;
     int golesRival = 0;
@@ -107,6 +120,52 @@ class LogicaPartido {
             rivales.add(new RivalMovil(TIPO_DELANTERO, "DEL", 0.35, y,
                     Math.cos(angulo) * velocidad, Math.sin(angulo) * velocidad));
         }
+
+        // Arquero rival: se mueve de palo a palo siguiendo la pelota
+        arqueroRival = new RivalMovil(TIPO_ARQUERO, "ARQ", ARQUERO_X, 0.50, 0.0, 0.0);
+        arqueroRival.minX = ARQUERO_X;
+        arqueroRival.maxX = ARQUERO_X;
+        arqueroRival.minY = ARQUERO_MIN_Y;
+        arqueroRival.maxY = ARQUERO_MAX_Y;
+    }
+
+    // Altura a la que el arquero deberia pararse segun donde esta la pelota.
+    // Si la pelota va por arriba, se corre hacia el palo de arriba, y al reves.
+    double alturaIdealArquero() {
+        Grafo.Vertice vBal = cancha.vertices.get(balon);
+
+        double ideal = 0.50 + (vBal.y - 0.50) * 0.45;
+
+        if (ideal < ARQUERO_MIN_Y) {
+            ideal = ARQUERO_MIN_Y;
+        }
+        if (ideal > ARQUERO_MAX_Y) {
+            ideal = ARQUERO_MAX_Y;
+        }
+        return ideal;
+    }
+
+    private void moverArquero() {
+        double objetivo = alturaIdealArquero();
+        double dy = objetivo - arqueroRival.y;
+
+        // Tiene velocidad maxima: si la pelota cambia rapido de lado, llega tarde
+        if (dy > ARQUERO_VEL_MAX) {
+            dy = ARQUERO_VEL_MAX;
+        }
+        if (dy < -ARQUERO_VEL_MAX) {
+            dy = -ARQUERO_VEL_MAX;
+        }
+
+        arqueroRival.vy = dy;
+        arqueroRival.y = arqueroRival.y + dy;
+
+        if (arqueroRival.y < arqueroRival.minY) {
+            arqueroRival.y = arqueroRival.minY;
+        }
+        if (arqueroRival.y > arqueroRival.maxY) {
+            arqueroRival.y = arqueroRival.maxY;
+        }
     }
 
     static Grafo crearCancha() {
@@ -153,6 +212,8 @@ class LogicaPartido {
         }
 
         Grafo.Vertice vBal = cancha.vertices.get(balon);
+
+        moverArquero();
 
         for (int i = 0; i < rivales.size(); i++) {
             RivalMovil rm = rivales.get(i);
@@ -276,22 +337,38 @@ class LogicaPartido {
             return;
         }
 
-        balon = destino;
-
         if (destino == ARCO) {
+            // Calculo el remate antes de mover la pelota, asi el arquero
+            // se compara contra la posicion del que patea
             tirarAlArco();
             return;
         }
 
+        balon = destino;
+
         mensaje = "Pase a " + cancha.vertices.get(destino).nombre + ". ¡Seguí avanzando!";
     }
 
+    // Probabilidad de que el remate sea gol: depende de que tan lejos
+    // esta el arquero rival de donde deberia estar para tapar el tiro
+    double probabilidadGol() {
+        double desfase = Math.abs(arqueroRival.y - alturaIdealArquero());
+
+        double factor = desfase / 0.10;
+        if (factor > 1.0) {
+            factor = 1.0;
+        }
+
+        return PROB_GOL_MIN + (PROB_GOL_MAX - PROB_GOL_MIN) * factor;
+    }
+
     private void tirarAlArco() {
-        if (rnd.nextDouble() < PROB_GOL_TIRO) {
+        if (rnd.nextDouble() < probabilidadGol()) {
             golesMio = golesMio + 1;
 
             if (golesMio >= META) {
                 terminado = true;
+                balon = ARCO;
                 mensaje = "¡¡GOOOL de " + mio.nombre + "!! ¡Ganaste el partido!";
             } else {
                 reiniciarDesdeArquero("¡¡GOOOL de " + mio.nombre + "!! Volvés a empezar desde el arquero.");

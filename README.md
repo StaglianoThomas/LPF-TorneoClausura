@@ -10,7 +10,7 @@ Elegís uno de ocho equipos del fútbol argentino y tratás de ganar el torneo: 
 2. Se sortean los cruces y se muestra el cuadro del torneo (las llaves).
 3. En cada partido, hacé clic en un compañero para pasarle la pelota. Las líneas punteadas muestran los pases posibles.
 4. Los rivales se mueven por la cancha e intentan interceptar los pases.
-5. Para hacer un gol, llegá hasta el arco con pases y pegale.
+5. Para hacer un gol, llegá hasta el arco con pases y pegale. El arquero rival se mueve de palo a palo siguiendo la pelota: si pateás cuando quedó descolocado (por ejemplo, después de un cambio de frente rápido), tenés más chances de hacer el gol.
 6. El partido se gana llegando a 2 goles. Si perdés, quedás eliminado.
 
 Si un rival te saca la pelota, volvés a empezar desde el arquero y hay una probabilidad de que te hagan un gol en la contra.
