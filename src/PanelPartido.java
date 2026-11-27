@@ -117,6 +117,11 @@ class PanelPartido extends JPanel {
                 if (!festejando()) {
                     timerFestejo.stop();
                     festejoEquipo = null;
+
+                    // Si el partido ya termino, recien ahora se puede continuar
+                    if (L.terminado) {
+                        continuar.setVisible(true);
+                    }
                 }
                 cancha.repaint();
             }
@@ -170,7 +175,11 @@ class PanelPartido extends JPanel {
         mensaje.setText(L.mensaje + "  (Pases mínimos al arco desde acá: " + pases + ")");
 
         if (L.terminado) {
-            detenerTimer();
+            // Solo freno a los rivales: el timer del festejo sigue corriendo
+            // para que la animacion del ultimo gol termine completa
+            if (timerRivales.isRunning()) {
+                timerRivales.stop();
+            }
 
             if (L.golesMio > L.golesRival) {
                 mensaje.setText(L.mensaje + "  ¡GANASTE!");
@@ -178,7 +187,8 @@ class PanelPartido extends JPanel {
                 mensaje.setText(L.mensaje + "  Quedaste eliminado.");
             }
 
-            continuar.setVisible(true);
+            // El boton aparece cuando termina el festejo
+            continuar.setVisible(!festejando());
         }
 
         cancha.repaint();
