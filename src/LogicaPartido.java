@@ -1,3 +1,5 @@
+// ======================== LOGICA: REGLAS DEL PARTIDO =======================
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -6,18 +8,31 @@ class LogicaPartido {
 
     static final int ARCO = 11;
     static final int META = 2;
-    static final int CANT_RIVALES = 5;
     static final double PROB_GOL_RIVAL_AL_QUITAR = 0.20;
     static final double PROB_GOL_TIRO = 0.80;
 
+    static final int TIPO_DEFENSOR = 0;
+    static final int TIPO_MEDIO = 1;
+    static final int TIPO_DELANTERO = 2;
+
     // Clase interna: rival que se mueve por la cancha
     static class RivalMovil {
+        int tipo;
+        String etiqueta;
         double x;
         double y;
         double vx;
         double vy;
 
-        RivalMovil(double x, double y, double vx, double vy) {
+        // Limites de movimiento de cada rival
+        double minX = 0.18;
+        double maxX = 0.89;
+        double minY = 0.10;
+        double maxY = 0.90;
+
+        RivalMovil(int tipo, String etiqueta, double x, double y, double vx, double vy) {
+            this.tipo = tipo;
+            this.etiqueta = etiqueta;
             this.x = x;
             this.y = y;
             this.vx = vx;
@@ -42,28 +57,56 @@ class LogicaPartido {
         this.mio = mio;
         this.rival = rival;
 
-        for (int i = 0; i < CANT_RIVALES; i++) {
-            double angulo = rnd.nextDouble() * Math.PI * 2;
-            double velocidad = 0.008 + rnd.nextDouble() * 0.007;
-
-            double xInicial;
-            double yInicial;
-
-            if (i == 4) {
-                xInicial = 0.84;
-                yInicial = 0.50;
-            } else {
-                xInicial = 0.28 + (i % 4) * 0.16;
-                yInicial = 0.22 + (i % 2) * 0.42;
-            }
-
-            double vx = Math.cos(angulo) * velocidad;
-            double vy = Math.sin(angulo) * velocidad;
-
-            rivales.add(new RivalMovil(xInicial, yInicial, vx, vy));
-        }
+        crearRivales();
 
         reiniciarDesdeArquero(mensaje);
+    }
+
+    private void crearRivales() {
+        // 4 defensores: suben y bajan, cada uno en su carril
+        for (int i = 0; i < 4; i++) {
+            double y = 0.20 + i * 0.20;
+            double velocidad = 0.005 + i * 0.001;
+
+            if (i % 2 == 1) {
+                velocidad = -velocidad;
+            }
+
+            RivalMovil defensor = new RivalMovil(TIPO_DEFENSOR, "DEF", 0.72, y, velocidad, 0.0);
+            defensor.minX = 0.58;
+            defensor.maxX = 0.85;
+            rivales.add(defensor);
+        }
+
+        // 4 mediocampistas: suben y bajan por el medio
+        double[] carriles = new double[4];
+        carriles[0] = 0.15;
+        carriles[1] = 0.38;
+        carriles[2] = 0.62;
+        carriles[3] = 0.85;
+
+        for (int i = 0; i < 4; i++) {
+            double velocidad = 0.006 + i * 0.001;
+
+            if (i % 2 == 1) {
+                velocidad = -velocidad;
+            }
+
+            RivalMovil medio = new RivalMovil(TIPO_MEDIO, "MED", 0.50, carriles[i], velocidad, 0.0);
+            medio.minX = 0.32;
+            medio.maxX = 0.62;
+            rivales.add(medio);
+        }
+
+        // 2 delanteros: presionan a quien tiene la pelota
+        for (int i = 0; i < 2; i++) {
+            double angulo = rnd.nextDouble() * Math.PI * 2;
+            double velocidad = 0.010;
+            double y = 0.35 + i * 0.30;
+
+            rivales.add(new RivalMovil(TIPO_DELANTERO, "DEL", 0.35, y,
+                    Math.cos(angulo) * velocidad, Math.sin(angulo) * velocidad));
+        }
     }
 
     static Grafo crearCancha() {
@@ -75,7 +118,7 @@ class LogicaPartido {
         g.agregarVertice(2, "DFC", 0.23, 0.62);
         g.agregarVertice(4, "LD", 0.23, 0.85);
         g.agregarVertice(7, "MDI", 0.49, 0.20);
-        g.agregarVertice(5, "MDC", 0.49, 0.50);
+        g.agregarVertice(5, "MC", 0.49, 0.50);
         g.agregarVertice(8, "MDD", 0.49, 0.80);
         g.agregarVertice(11, "EI", 0.74, 0.15);
         g.agregarVertice(9, "DC", 0.76, 0.50);
@@ -93,7 +136,7 @@ class LogicaPartido {
                 double distancia = Math.sqrt(difX * difX + difY * difY);
 
                 if (distancia <= 0.42) {
-                    // El arquero no puede pasarle directo al arco
+                    // El arquero no puede pegarle directo al arco
                     if (!(i == 0 && j == ARCO)) {
                         g.agregarArista(i, j);
                     }
@@ -114,45 +157,48 @@ class LogicaPartido {
         for (int i = 0; i < rivales.size(); i++) {
             RivalMovil rm = rivales.get(i);
 
-            double dx = vBal.x - rm.x;
-            double dy = vBal.y - rm.y;
-            double dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < 0.06) {
-                dist = 0.06;
-            }
+            // Solo los delanteros persiguen la pelota
+            if (rm.tipo == TIPO_DELANTERO) {
+                double dx = vBal.x - rm.x;
+                double dy = vBal.y - rm.y;
+                double dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 0.06) {
+                    dist = 0.06;
+                }
 
-            double empuje = 0.0010;
+                double empuje = 0.0010;
 
-            rm.vx = rm.vx + (dx / dist) * empuje + (rnd.nextDouble() - 0.5) * 0.003;
-            rm.vy = rm.vy + (dy / dist) * empuje + (rnd.nextDouble() - 0.5) * 0.003;
+                rm.vx = rm.vx + (dx / dist) * empuje + (rnd.nextDouble() - 0.5) * 0.003;
+                rm.vy = rm.vy + (dy / dist) * empuje + (rnd.nextDouble() - 0.5) * 0.003;
 
-            // Limito la velocidad maxima
-            double maxVel = 0.015;
-            double velActual = Math.sqrt(rm.vx * rm.vx + rm.vy * rm.vy);
+                // Limito la velocidad maxima
+                double maxVel = 0.015;
+                double velActual = Math.sqrt(rm.vx * rm.vx + rm.vy * rm.vy);
 
-            if (velActual > maxVel) {
-                rm.vx = (rm.vx / velActual) * maxVel;
-                rm.vy = (rm.vy / velActual) * maxVel;
+                if (velActual > maxVel) {
+                    rm.vx = (rm.vx / velActual) * maxVel;
+                    rm.vy = (rm.vy / velActual) * maxVel;
+                }
             }
 
             rm.x = rm.x + rm.vx;
             rm.y = rm.y + rm.vy;
 
-            // Rebote en los bordes de la cancha
-            if (rm.x < 0.18) {
-                rm.x = 0.18;
+            // Rebote en los limites propios de cada rival
+            if (rm.x < rm.minX) {
+                rm.x = rm.minX;
                 rm.vx = Math.abs(rm.vx);
             }
-            if (rm.x > 0.89) {
-                rm.x = 0.89;
+            if (rm.x > rm.maxX) {
+                rm.x = rm.maxX;
                 rm.vx = -Math.abs(rm.vx);
             }
-            if (rm.y < 0.10) {
-                rm.y = 0.10;
+            if (rm.y < rm.minY) {
+                rm.y = rm.minY;
                 rm.vy = Math.abs(rm.vy);
             }
-            if (rm.y > 0.90) {
-                rm.y = 0.90;
+            if (rm.y > rm.maxY) {
+                rm.y = rm.maxY;
                 rm.vy = -Math.abs(rm.vy);
             }
         }

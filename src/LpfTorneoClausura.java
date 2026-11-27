@@ -99,7 +99,6 @@ public class LpfTorneoClausura extends JFrame {
         usuario = elegido;
 
         arbol = new ArbolTorneo(equipos);
-
         llaves.arbol = arbol;
         llaves.usuario = usuario;
 

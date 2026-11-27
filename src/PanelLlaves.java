@@ -86,7 +86,7 @@ class PanelLlaves extends JPanel {
             titulos[0] = "Cuartos de final";
             titulos[1] = "Semifinales";
             titulos[2] = "Final";
-            titulos[3] = "CampeÃ³n";
+            titulos[3] = "Campeon";
 
             g.setFont(new Font("SansSerif", Font.BOLD, 15));
             g.setColor(Color.DARK_GRAY);

@@ -277,16 +277,11 @@ class PanelPartido extends JPanel {
 
                 Dibujo.camiseta(g, L.rival, rx - 14, ry - 17, 28, 31);
 
-                g.setColor(Color.WHITE);
+                g.setColor(Color.BLACK);
                 g.setFont(new Font("SansSerif", Font.BOLD, 9));
 
-                String etiqueta;
-                if (i == 4) {
-                    etiqueta = "DEF";
-                } else {
-                    etiqueta = "R" + (i + 1);
-                }
-                Dibujo.centrar(g, etiqueta, rx, ry + 3);
+                String etiqueta = String.valueOf(i + 1);
+                Dibujo.centrar(g, etiqueta, rx, ry +3);
             }
 
             // ---------- Jugadores propios y el arco ----------
